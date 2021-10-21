@@ -1,4 +1,4 @@
-.build
-.mbed
+.BUILD
+.mbed-os
 projectfiles
 *.py*
