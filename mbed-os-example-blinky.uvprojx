@@ -11213,11 +11213,36 @@
               <FileType>5</FileType>
               <FilePath>mbed_config.h</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>accelerometer</GroupName>
+          <Files>
+            <File>
+              <FileName>MMA8451Q.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\MMA8451Q.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>MMA8451Q.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\MMA8451Q.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>analogic</GroupName>
+          <Files>
             <File>
               <FileName>analogread.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\analogread.cpp</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>rth</GroupName>
+          <Files>
             <File>
               <FileName>rthsensor.cpp</FileName>
               <FileType>8</FileType>
