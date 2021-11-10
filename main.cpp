@@ -80,7 +80,6 @@ void I2CRead(void){
 				rgb_sensor.enablePowerAndRGBC();
 				rgb_sensor.getAllColors(rgb_readings);
 				RGBerror = false;
-				rgb_sensor.disablePowerAndRGBC();
 			
 			I2CFinish = true;
 			wait_us(2000000);
