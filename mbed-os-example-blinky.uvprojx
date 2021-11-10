@@ -11250,6 +11250,21 @@
             </File>
           </Files>
         </Group>
+        <Group>
+          <GroupName>rgb</GroupName>
+          <Files>
+            <File>
+              <FileName>TCS3472_I2C.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\TCS3472_I2C\TCS3472_I2C.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>TCS3472_I2C.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\TCS3472_I2C\TCS3472_I2C.h</FilePath>
+            </File>
+          </Files>
+        </Group>
       </Groups>
     </Target>
   </Targets>
