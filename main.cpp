@@ -5,6 +5,11 @@
 #include "mbed.h"
 #include "MMA8451Q.h"
 #include "TCS3472_I2C/TCS3472_I2C.h"
+#include "MBed_Adafruit_GPS.h"
+
+using namespace std::chrono;
+BufferedSerial * gps_Serial;
+
 
 
 
@@ -95,8 +100,56 @@ int main() {
 	AnalogFinish = false;
 	I2CFinish = false;
 	
+	  gps_Serial = new BufferedSerial(PA_9, PA_10,9600); //serial object for use w/ GPS
+    Adafruit_GPS myGPS(gps_Serial); //object of Adafruit's GPS class
+    char c; //when read via Adafruit_GPS::read(), the class returns single character stored here
+    Timer refresh_Timer; //sets up a timer for use in loop; how often do we print GPS info?
+    const int refresh_Time = 2000; //refresh time in ms
+
+    myGPS.begin(9600);  //sets baud rate for GPS communication; note this may be changed via Adafruit_GPS::sendCommand(char *)
+                        //a list of GPS commands is available at http://www.adafruit.com/datasheets/PMTK_A08.pdf
+
+    myGPS.sendCommand(PMTK_SET_NMEA_OUTPUT_GGA); //these commands are defined in MBed_Adafruit_GPS.h; a link is provided there for command creation
+    myGPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+    myGPS.sendCommand(PGCMD_ANTENNA);
+
+    printf("Connection established at 9600 baud...\r\n");
+
+    
+
+    refresh_Timer.start();  //starts the clock on the timer
+
+	
 	
   while (1){
+		
+		 c = myGPS.read();   //queries the GPS
+
+//        if (c) { printf("%c", c); } //this line will echo the GPS data if not paused
+
+        //check if we recieved a new message from GPS, if so, attempt to parse it,
+        if ( myGPS.newNMEAreceived() ) {
+            if ( !myGPS.parse(myGPS.lastNMEA()) ) {
+                continue;
+            }
+        }
+
+        //check if enough time has passed to warrant printing GPS info to screen
+        //note if refresh_Time is too low or pc.baud is too low, GPS data may be lost during printing
+        if (duration_cast<milliseconds>(refresh_Timer.elapsed_time()).count() >= refresh_Time) {
+        //if (refresh_Timer.read_ms() >= refresh_Time) {
+            refresh_Timer.reset();
+            printf("Time: %d:%d:%d.%u\r\n", myGPS.hour + 1, myGPS.minute, myGPS.seconds, myGPS.milliseconds);
+            printf("Date: %d/%d/20%d\r\n", myGPS.day, myGPS.month, myGPS.year);
+            printf("Quality: %d\r\n", (int) myGPS.fixquality);
+            if ((int)myGPS.fixquality > 0) {
+                printf("Location: %5.2f %c, %5.2f %c\r\n", myGPS.latitude, myGPS.lat, myGPS.longitude, myGPS.lon);
+                printf("Speed: %5.2f knots\r\n", myGPS.speed);
+                printf("Angle: %5.2f\r\n", myGPS.angle);
+                printf("Altitude: %5.2f\r\n", myGPS.altitude);
+                printf("Satellites: %d\r\n", myGPS.satellites);
+            }
+        }
 
 		
 			if(AnalogFinish && I2CFinish){
