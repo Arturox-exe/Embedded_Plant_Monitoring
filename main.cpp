@@ -32,8 +32,8 @@ DigitalOut Red(PH_0);
 DigitalOut Green(PH_1);
 DigitalOut Blue(PB_13);
 
-Thread AnalogThread;
-Thread I2CThread;
+Thread AnalogThread(osPriorityNormal, 1024);
+Thread I2CThread(osPriorityNormal, 1024);
 Thread GPSThread;
 
 bool AnalogFinish;
@@ -81,7 +81,7 @@ void I2CRead(void){
 			}
 			else
 				AccError = true;
-			
+			//rgb sensor at last
 				rgb_sensor.enablePowerAndRGBC();
 				rgb_sensor.getAllColors(rgb_readings);
 				RGBerror = false;
@@ -93,7 +93,7 @@ void I2CRead(void){
 }
 
 
-int main() {
+int main(void) {
 	
 	AnalogThread.start(AnalogRead);
 	I2CThread.start(I2CRead);
@@ -122,8 +122,16 @@ int main() {
 	
 	
   while (1){
-		
-		 c = myGPS.read();   //queries the GPS
+	
+			if(AnalogFinish && I2CFinish){
+				AnalogFinish = false;
+				I2CFinish = false;
+				
+				printf("SOIL MOISTURE: %.2f\n", moisture_value);
+				printf("LIGHT: %.2f\n", light_value);
+				
+				
+				c = myGPS.read();   //queries the GPS
 
 //        if (c) { printf("%c", c); } //this line will echo the GPS data if not paused
 
@@ -139,37 +147,34 @@ int main() {
         if (duration_cast<milliseconds>(refresh_Timer.elapsed_time()).count() >= refresh_Time) {
         //if (refresh_Timer.read_ms() >= refresh_Time) {
             refresh_Timer.reset();
-            printf("Time: %d:%d:%d.%u\r\n", myGPS.hour + 1, myGPS.minute, myGPS.seconds, myGPS.milliseconds);
-            printf("Date: %d/%d/20%d\r\n", myGPS.day, myGPS.month, myGPS.year);
-            printf("Quality: %d\r\n", (int) myGPS.fixquality);
+					
+					printf("GPS - #Sats: %d\r", myGPS.satellites);
             if ((int)myGPS.fixquality > 0) {
-                printf("Location: %5.2f %c, %5.2f %c\r\n", myGPS.latitude, myGPS.lat, myGPS.longitude, myGPS.lon);
-                printf("Speed: %5.2f knots\r\n", myGPS.speed);
-                printf("Angle: %5.2f\r\n", myGPS.angle);
-                printf("Altitude: %5.2f\r\n", myGPS.altitude);
-                printf("Satellites: %d\r\n", myGPS.satellites);
-            }
+                printf("Lat(VTC): %5.2f %c\r", myGPS.latitude, myGPS.lat);
+							  printf("Long(VTC): %5.2f %c\r", myGPS.longitude, myGPS.lon);
+                printf("Altitude: %5.2f m\r", myGPS.altitude);
+            }else
+						printf("NOT ENOUGH QUALITY TO GET LOCATION ");
+						
+						printf("GPS Time: %d:%d:%d.%u\r\n", myGPS.hour + 1, myGPS.minute, myGPS.seconds, myGPS.milliseconds);
         }
-
-		
-			if(AnalogFinish && I2CFinish){
-				AnalogFinish = false;
-				I2CFinish = false;
 				
 					if(!RTHerror){		
-				printf("Temperature: %d ,%3d oC\r\n", _tData / 1000, _tData % 1000);
-				printf("Humidity: %d,%3d%\r\n", _rhData / 1000, _rhData % 1000);
+				printf("TEMP/HUM -");
+				printf("Temperature: %d ,%3d oC ", _tData / 1000, _tData % 1000);
+				printf("Relative Humidity: %d,%3d % \n", _rhData / 1000, _rhData % 1000);
 					}
 					else
-				printf("Please connect the rth sensor");
+				printf("**********PLEASE CONNECT THE RTH SENSOR***********\n");
 					
 				if(!AccError){
-					printf("Rotation: x =%f \t y=%f\t z=%f\n",result[0],result[1],result[2]);
+					printf("ROTATION: X_axis= %.2f\t Y_axis= %.2f\t Z_axis= %.2f \n",
+					result[0] * 10,result[1] * 10,result[2] * 10);
 				}else
-				printf("Please connect accelerometer");
+				printf("**********PLEASE CONNECT ACCELEROMETER*********\n");
 				
 				if(!RGBerror){
-					printf("Reading: clear %d, red%d,green%d, blue%d\n",rgb_readings[0],rgb_readings[1],rgb_readings[2],rgb_readings[3]);
+					printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],rgb_readings[1],rgb_readings[2],rgb_readings[3]);
 							if(rgb_readings[0]>6000)
 						{
 								Red    = 0;
@@ -207,10 +212,7 @@ int main() {
 							}
 				}else 
 					printf("Please Connect RGB sensor");
-				
-				printf("Light: %.2f % \n", light_value);
-				printf("Moisture:  %.2f % \n", moisture_value);
-			
+
 			}
 
 	
