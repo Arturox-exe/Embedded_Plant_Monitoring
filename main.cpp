@@ -70,6 +70,7 @@ float max_z = 0.0;
 int red_counter = 0;
 int blue_counter = 0;
 int green_counter = 0;
+bool bigger_one = false;
 
 
 
@@ -287,20 +288,24 @@ int main(void) {
 			printf("RESULTS AFTER AN HOUR WITH %i VALUES TAKEN: \n", counter);
 			printf("SOIL MOISTURE: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_moisture, max_moisture, min_moisture);
 			printf("LIGHT: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
-			printf("TEMP/HUM -");
+			printf("TEMP/HUM: ");
 			printf("Temperature: MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_t, max_t, min_t);
 			printf("Relative Humidity: MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_rh, max_rh, min_rh);
 			printf("ROTATION: X_max= %.2f\t X_min= %.2f\t Y_max= %.2f\t Y_min= %.2f\t Z_max= %.2f\t Z_min= %.2f \n",
 					max_x, min_x, max_y, min_y, max_z, min_z);
 			if(red_counter>blue_counter && red_counter>green_counter){
 				printf("RED IS THE COLOR MOST SAW, %i TIMES", red_counter);
+				bigger_one = true;
 			}
 			if(blue_counter>red_counter && blue_counter>green_counter){
 				printf("BLUE IS THE COLOR MOST SAW, %i TIMES", blue_counter);
+				bigger_one = true;
 			}
 			if(green_counter>red_counter && green_counter>blue_counter){
 				printf("GREEN IS THE COLOR MOST SAW, %i TIMES", green_counter);
+				bigger_one = true;
 			}
+			if(!bigger_one){ printf("THERE IS NOT A CLEAR COLOR ABOVE THE OTHERS"); } 
 			
 			printf("\n \n");
 			
@@ -345,6 +350,7 @@ int main(void) {
 			red_counter = 0;
 			blue_counter = 0;
 			green_counter = 0;
+			bigger_one = false;
 			
 			
 			counter = 0;
@@ -390,7 +396,7 @@ int main(void) {
         }
 				
 					if(!RTHerror){		
-						printf("TEMP/HUM -");
+						printf("TEMP/HUM: ");
 						tData = _tData/1000;
 						auxtData = _tData % 1000;
 						if(auxtData > 100){
