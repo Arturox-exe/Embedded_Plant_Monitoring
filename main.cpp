@@ -26,22 +26,46 @@ float auxtData;
 extern float light_value;
 extern float moisture_value;
 float result[3] = {0,0,0};
+float x_value, y_value, z_value;
 int rgb_readings[4]; // Declare a 4 element array to store RGB sensor readings
 
-int counter;
+int counter = 0;
 
 float sum_light = 0.0;
 float min_light = 0.0;
 bool light_0 = true;
 float max_light = 0.0;
 float mean_light = 0.0;
+
 float sum_moisture = 0.0;
 float min_moisture = 0.0;
 bool moisture_0 = true;
 float max_moisture = 0.0;
 float mean_moisture = 0.0;
 
+float sum_t = 0.0;
+float min_t = 0.0;
+bool t_0 = true;
+float max_t = 0.0;
+float mean_t = 0.0;
 
+float sum_rh = 0.0;
+float min_rh = 0.0;
+bool rh_0 = true;
+float max_rh = 0.0;
+float mean_rh = 0.0;
+
+float min_x = 0.0;
+bool x_0 = true;
+float max_x = 0.0;
+
+float min_y = 0.0;
+bool y_0 = true;
+float max_y = 0.0;
+
+float min_z = 0.0;
+bool z_0 = true;
+float max_z = 0.0;
 
 
 
@@ -190,11 +214,36 @@ int main(void) {
 			light_0 = true;
 			max_light = 0.0;
 			mean_light = 0.0;
+			
 			sum_moisture = 0.0;
 			min_moisture = 0.0;
 			moisture_0 = true;
 			max_moisture = 0.0;
-			mean_moisture = 0.0;	
+			mean_moisture = 0.0;
+			
+			sum_t = 0.0;
+			min_t = 0.0;
+			t_0 = true;
+			max_t = 0.0;
+			mean_t = 0.0;
+
+			sum_rh = 0.0;
+			min_rh = 0.0;
+			rh_0 = true;
+			max_rh = 0.0;
+			mean_rh = 0.0;
+
+			min_x = 0.0;
+			x_0 = true;
+			max_x = 0.0;
+
+			min_y = 0.0;
+			y_0 = true;
+			max_y = 0.0;
+
+			min_z = 0.0;
+			z_0 = true;
+			max_z = 0.0;	
 			
 			counter = 0;
 		}
@@ -216,10 +265,17 @@ int main(void) {
 			
 			mean_light = sum_light / counter;
 			mean_moisture = sum_moisture / counter;
+			mean_t = sum_t /counter;
+			mean_rh = sum_rh / counter;
 			
 			printf("RESULTS AFTER AN HOUR WITH %i VALUES TAKEN: \n", counter);
 			printf("SOIL MOISTURE: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_moisture, max_moisture, min_moisture);
 			printf("LIGHT: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
+			printf("TEMP/HUM -");
+			printf("Temperature: MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_t, max_t, min_t);
+			printf("Relative Humidity: MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_rh, max_rh, min_rh);
+			printf("ROTATION: X_max= %.2f\t X_min= %.2f\t Y_max= %.2f\t Y_min= %.2f\t Z_max= %.2f\t Z_min= %.2f \n",
+					max_x, min_x, max_y, min_y, max_z, min_z);
 			printf("\n");
 			
 			sum_light = 0.0;
@@ -227,11 +283,36 @@ int main(void) {
 			light_0 = true;
 			max_light = 0.0;
 			mean_light = 0.0;
+			
 			sum_moisture = 0.0;
 			min_moisture = 0.0;
 			moisture_0 = true;
 			max_moisture = 0.0;
 			mean_moisture = 0.0;
+			
+			sum_t = 0.0;
+			min_t = 0.0;
+			t_0 = true;
+			max_t = 0.0;
+			mean_t = 0.0;
+
+			sum_rh = 0.0;
+			min_rh = 0.0;
+			rh_0 = true;
+			max_rh = 0.0;
+			mean_rh = 0.0;
+
+			min_x = 0.0;
+			x_0 = true;
+			max_x = 0.0;
+
+			min_y = 0.0;
+			y_0 = true;
+			max_y = 0.0;
+
+			min_z = 0.0;
+			z_0 = true;
+			max_z = 0.0;
 			
 			counter = 0;
 		}	
@@ -316,8 +397,11 @@ int main(void) {
 				printf("**********PLEASE CONNECT THE RTH SENSOR***********\n");
 					
 				if(!AccError){
+					x_value = result[0] * 10;
+					y_value = result[1] * 10;
+					z_value = result[2] * 10;
 					printf("ROTATION: X_axis= %.2f\t Y_axis= %.2f\t Z_axis= %.2f \n",
-					result[0] * 10,result[1] * 10,result[2] * 10);
+					x_value, y_value, z_value);
 				}else
 				printf("**********PLEASE CONNECT ACCELEROMETER*********\n");
 				
@@ -372,11 +456,24 @@ int main(void) {
 				if(!test && !start_ticker){
 					counter = counter + 1;
 					sum_light = sum_light + light_value;
-					sum_moisture = sum_moisture + moisture_value;		
+					sum_moisture = sum_moisture + moisture_value;
+					sum_t = sum_t + tData;
+					sum_rh = sum_rh + rhData;
 					if(light_value < min_light || light_0){min_light = light_value; light_0 = false;}	
 					if(light_value > max_light){max_light = light_value;}	
 					if(moisture_value < min_moisture || moisture_0){min_moisture = moisture_value; moisture_0 = false;}	
 					if(moisture_value > max_moisture){max_moisture = moisture_value;}	
+					if(tData < min_t || t_0){min_t = tData; t_0 = false;}	
+					if(tData > max_t){max_t = tData;}
+					if(rhData < min_rh || rh_0){min_rh = rhData; rh_0 = false;}	
+					if(rhData > max_rh){max_rh = rhData;}
+					
+					if(x_value < min_x || x_0){min_x = x_value; x_0 = false;}	
+					if(x_value > max_x){max_x = x_value;}
+					if(y_value < min_y || y_0){min_y = y_value; y_0 = false;}	
+					if(y_value > max_y){max_y = y_value;}
+					if(z_value < min_z || z_0){min_z = z_value; z_0 = false;}	
+					if(z_value > max_z){max_z = z_value;}
 					
 				}
 
