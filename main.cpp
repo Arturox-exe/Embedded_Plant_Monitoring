@@ -67,6 +67,10 @@ float min_z = 0.0;
 bool z_0 = true;
 float max_z = 0.0;
 
+int red_counter = 0;
+int blue_counter = 0;
+int green_counter = 0;
+
 
 
 int wait_threads;
@@ -199,6 +203,10 @@ int main(void) {
 			first_half = false;
 			second_half = false;
 			start_ticker = false;
+			
+			Red = 0;
+			Green = 0;
+			Blue = 0;
 		}
 		if(!test && !change){
 			test_mode = 0;
@@ -208,6 +216,10 @@ int main(void) {
 			first_half = false;
 			second_half = false;
 			start_ticker = true;
+			
+			Red = 0;
+			Green = 0;
+			Blue = 0;
 
 			sum_light = 0.0;
 			min_light = 0.0;
@@ -245,6 +257,10 @@ int main(void) {
 			z_0 = true;
 			max_z = 0.0;	
 			
+			red_counter = 0;
+			blue_counter = 0;
+			green_counter = 0;
+			
 			counter = 0;
 		}
 		
@@ -276,7 +292,19 @@ int main(void) {
 			printf("Relative Humidity: MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_rh, max_rh, min_rh);
 			printf("ROTATION: X_max= %.2f\t X_min= %.2f\t Y_max= %.2f\t Y_min= %.2f\t Z_max= %.2f\t Z_min= %.2f \n",
 					max_x, min_x, max_y, min_y, max_z, min_z);
-			printf("\n");
+			if(red_counter>blue_counter && red_counter>green_counter){
+				printf("RED IS THE COLOR MOST SAW, %i TIMES", red_counter);
+			}
+			if(blue_counter>red_counter && blue_counter>green_counter){
+				printf("BLUE IS THE COLOR MOST SAW, %i TIMES", blue_counter);
+			}
+			if(green_counter>red_counter && green_counter>blue_counter){
+				printf("GREEN IS THE COLOR MOST SAW, %i TIMES", green_counter);
+			}
+			
+			printf("\n \n");
+			
+			
 			
 			sum_light = 0.0;
 			min_light = 0.0;
@@ -313,6 +341,11 @@ int main(void) {
 			min_z = 0.0;
 			z_0 = true;
 			max_z = 0.0;
+			
+			red_counter = 0;
+			blue_counter = 0;
+			green_counter = 0;
+			
 			
 			counter = 0;
 		}	
@@ -405,47 +438,51 @@ int main(void) {
 				}else
 				printf("**********PLEASE CONNECT ACCELEROMETER*********\n");
 				
-				if(!RGBerror){
-					printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],rgb_readings[1],rgb_readings[2],rgb_readings[3]);
-							if(rgb_readings[0]>6000)
-						{
-								Red    = 0;
-								Green  = 0;
-								Blue   = 0;		
-						}
-						else
-							{
-								if(rgb_readings[1]<100 && rgb_readings[2]<100 && rgb_readings[3]<100) //If low: none
-									{
-										Red    = 1;
-										Green  = 1;
-										Blue   = 1;
-									}
-									else
-										{
-										if(rgb_readings[1]>rgb_readings[2] && rgb_readings[1]>=rgb_readings[3]) //If max=RED
-											{
-												Red    = 0;
-												Green  = 1;
-												Blue   = 1;
-											}else if(rgb_readings[2]>rgb_readings[1] && rgb_readings[2]>rgb_readings[3]) //If max=Green
-											{
-												Red    = 1;
-												Green  = 0;
-												Blue   = 1;
-											}
-											else if(rgb_readings[3]>rgb_readings[1] && rgb_readings[3]>rgb_readings[2])   //If max=Blue
-											{
-												Red    = 1;
-												Green  = 1;
-												Blue   = 0;						
-											}
-										}
-							}
-				}else 
-					printf("Please Connect RGB sensor");
+				if(test){
 				
-				printf("\n");
+					if(!RGBerror){
+						printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],rgb_readings[1],rgb_readings[2],rgb_readings[3]);
+								if(rgb_readings[0]>6000)
+							{
+									Red    = 0;
+									Green  = 0;
+									Blue   = 0;		
+							}
+							else
+								{
+									if(rgb_readings[1]<100 && rgb_readings[2]<100 && rgb_readings[3]<100) //If low: none
+										{
+											Red    = 1;
+											Green  = 1;
+											Blue   = 1;
+										}
+										else
+											{
+											if(rgb_readings[1]>rgb_readings[2] && rgb_readings[1]>=rgb_readings[3]) //If max=RED
+												{
+													Red    = 0;
+													Green  = 1;
+													Blue   = 1;
+												}else if(rgb_readings[2]>rgb_readings[1] && rgb_readings[2]>rgb_readings[3]) //If max=Green
+												{
+													Red    = 1;
+													Green  = 0;
+													Blue   = 1;
+												}
+												else if(rgb_readings[3]>rgb_readings[1] && rgb_readings[3]>rgb_readings[2])   //If max=Blue
+												{
+													Red    = 1;
+													Green  = 1;
+													Blue   = 0;						
+												}
+											}
+								}
+					}else 
+						printf("Please Connect RGB sensor");
+				}
+				
+				
+				
 							
 				
 				if(start_ticker){
@@ -475,7 +512,39 @@ int main(void) {
 					if(z_value < min_z || z_0){min_z = z_value; z_0 = false;}	
 					if(z_value > max_z){max_z = z_value;}
 					
+					if(!RGBerror){
+						printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],rgb_readings[1],rgb_readings[2],rgb_readings[3]);
+								if(rgb_readings[0]>6000)
+							{
+								
+							}
+							else
+								{
+									if(rgb_readings[1]<100 && rgb_readings[2]<100 && rgb_readings[3]<100) //If low: none
+										{
+										
+										}
+										else
+											{
+											if(rgb_readings[1]>rgb_readings[2] && rgb_readings[1]>=rgb_readings[3]) //If max=RED
+												{
+													red_counter = red_counter + 1;
+												}else if(rgb_readings[2]>rgb_readings[1] && rgb_readings[2]>rgb_readings[3]) //If max=Green
+												{
+													green_counter = green_counter + 1;
+												}
+												else if(rgb_readings[3]>rgb_readings[1] && rgb_readings[3]>rgb_readings[2])   //If max=Blue
+												{
+													blue_counter = blue_counter + 1;						
+												}
+											}
+								}
+					}else 
+						printf("Please Connect RGB sensor");
+					
 				}
+				
+				printf("\n");
 
 			}
 
