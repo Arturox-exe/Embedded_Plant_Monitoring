@@ -18,12 +18,40 @@ BufferedSerial * gps_Serial;
  ******************************************************************************/
  
 extern uint32_t _rhData;
+float rhData;
+float auxrhData;
 extern int32_t  _tData;
+float tData;
+float auxtData;
 extern float light_value;
 extern float moisture_value;
 float result[3] = {0,0,0};
 int rgb_readings[4]; // Declare a 4 element array to store RGB sensor readings
 
+int counter;
+
+float sum_light = 0.0;
+float min_light = 0.0;
+bool light_0 = true;
+float max_light = 0.0;
+float mean_light = 0.0;
+float sum_moisture = 0.0;
+float min_moisture = 0.0;
+bool moisture_0 = true;
+float max_moisture = 0.0;
+float mean_moisture = 0.0;
+
+
+
+
+
+int wait_threads;
+InterruptIn button(PB_2);
+bool test = true;
+bool change = false;
+bool first_half = false;
+bool second_half = false;
+bool start_ticker = false;
 
 
 //Show the sensed colour
@@ -32,9 +60,13 @@ DigitalOut Red(PH_0);
 DigitalOut Green(PH_1);
 DigitalOut Blue(PB_13);
 
+DigitalOut test_mode(PB_5);
+DigitalOut normal_mode(PA_5);
+
 Thread AnalogThread(osPriorityNormal, 1024);
 Thread I2CThread(osPriorityNormal, 1024);
-Thread GPSThread;
+
+Ticker half;
 
 bool AnalogFinish;
 bool I2CFinish;
@@ -56,7 +88,7 @@ void AnalogRead(void){
 	while(true){
 		ReadADC();
 		AnalogFinish = true;
-		wait_us(2000000);
+		wait_us(wait_threads);
 	}
 }
 
@@ -87,10 +119,14 @@ void I2CRead(void){
 				RGBerror = false;
 			
 			I2CFinish = true;
-			wait_us(2000000);
+			wait_us(wait_threads);
 		  
 	}
 }
+
+void change_mode(void){test = !test; change = false;}
+void tickhalf_isr(void) {first_half = true;}
+
 
 
 int main(void) {
@@ -100,11 +136,15 @@ int main(void) {
 	AnalogFinish = false;
 	I2CFinish = false;
 	
+	button.mode(PullUp);
+  button.fall(change_mode);
+	
 	  gps_Serial = new BufferedSerial(PA_9, PA_10,9600); //serial object for use w/ GPS
     Adafruit_GPS myGPS(gps_Serial); //object of Adafruit's GPS class
     char c; //when read via Adafruit_GPS::read(), the class returns single character stored here
     Timer refresh_Timer; //sets up a timer for use in loop; how often do we print GPS info?
     const int refresh_Time = 2000; //refresh time in ms
+	  wait_threads = 2000000;
 
     myGPS.begin(9600);  //sets baud rate for GPS communication; note this may be changed via Adafruit_GPS::sendCommand(char *)
                         //a list of GPS commands is available at http://www.adafruit.com/datasheets/PMTK_A08.pdf
@@ -114,6 +154,8 @@ int main(void) {
     myGPS.sendCommand(PGCMD_ANTENNA);
 
     printf("Connection established at 9600 baud...\r\n");
+		
+
 
     
 
@@ -122,10 +164,84 @@ int main(void) {
 	
 	
   while (1){
+		
+		
+		
+		if(test && !change){	
+			test_mode = 1;
+			normal_mode = 0;
+			wait_threads = 2000000;
+			change = true;
+			first_half = false;
+			second_half = false;
+			start_ticker = false;
+		}
+		if(!test && !change){
+			test_mode = 0;
+			normal_mode = 1;
+			wait_threads = 5000000;
+			change = true;
+			first_half = false;
+			second_half = false;
+			start_ticker = true;
+
+			sum_light = 0.0;
+			min_light = 0.0;
+			light_0 = true;
+			max_light = 0.0;
+			mean_light = 0.0;
+			sum_moisture = 0.0;
+			min_moisture = 0.0;
+			moisture_0 = true;
+			max_moisture = 0.0;
+			mean_moisture = 0.0;	
+			
+			counter = 0;
+		}
+		
+		if(test && (first_half || second_half)){first_half = false; second_half = false;}
+		
+		if(!test && first_half && !second_half){
+			first_half = false;
+			second_half = true;
+			half.attach_us(tickhalf_isr, 10000000);
+			printf("TERMINEEEEEEEEEEEEEEEEEEE 1 \n");
+		}
+		
+				
+		if(!test && first_half && second_half){
+			first_half = false;
+			second_half = false;
+			half.attach_us(tickhalf_isr, 10000000);
+			
+			mean_light = sum_light / counter;
+			mean_moisture = sum_moisture / counter;
+			
+			printf("RESULTS AFTER AN HOUR WITH %i VALUES TAKEN: \n", counter);
+			printf("SOIL MOISTURE: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_moisture, max_moisture, min_moisture);
+			printf("LIGHT: MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
+			printf("\n");
+			
+			sum_light = 0.0;
+			min_light = 0.0;
+			light_0 = true;
+			max_light = 0.0;
+			mean_light = 0.0;
+			sum_moisture = 0.0;
+			min_moisture = 0.0;
+			moisture_0 = true;
+			max_moisture = 0.0;
+			mean_moisture = 0.0;
+			
+			counter = 0;
+		}	
+		
 	
 			if(AnalogFinish && I2CFinish){
 				AnalogFinish = false;
 				I2CFinish = false;
+				
+		
 				
 				printf("SOIL MOISTURE: %.2f\n", moisture_value);
 				printf("LIGHT: %.2f\n", light_value);
@@ -160,9 +276,41 @@ int main(void) {
         }
 				
 					if(!RTHerror){		
-				printf("TEMP/HUM -");
-				printf("Temperature: %d ,%3d oC ", _tData / 1000, _tData % 1000);
-				printf("Relative Humidity: %d,%3d % \n", _rhData / 1000, _rhData % 1000);
+						printf("TEMP/HUM -");
+						tData = _tData/1000;
+						auxtData = _tData % 1000;
+						if(auxtData > 100){
+							tData = tData + (auxtData/1000);
+						}
+						else{
+							if(auxtData > 10){
+								tData = tData + (auxtData/100);
+							}
+							else{
+								
+								tData = tData + (auxtData/10);						
+													 
+							}
+						}
+						printf("Temperature: %.3f oC ", tData);
+						
+						rhData = _rhData/1000;
+						auxrhData = _rhData % 1000;
+						if(auxrhData > 100){
+							rhData = rhData + (auxrhData/1000);
+						}
+						else{
+							if(auxrhData > 10){
+								rhData = rhData + (auxrhData/100);
+							}
+							else{
+								
+								rhData = rhData + (auxrhData/10);						
+													 
+							}
+						}
+						printf("Relative Humidity: %.3f % \n", rhData);
+				
 					}
 					else
 				printf("**********PLEASE CONNECT THE RTH SENSOR***********\n");
@@ -212,6 +360,25 @@ int main(void) {
 							}
 				}else 
 					printf("Please Connect RGB sensor");
+				
+				printf("\n");
+							
+				
+				if(start_ticker){
+					start_ticker = false;
+					half.attach_us(tickhalf_isr, 5000000);
+				}
+				
+				if(!test && !start_ticker){
+					counter = counter + 1;
+					sum_light = sum_light + light_value;
+					sum_moisture = sum_moisture + moisture_value;		
+					if(light_value < min_light || light_0){min_light = light_value; light_0 = false;}	
+					if(light_value > max_light){max_light = light_value;}	
+					if(moisture_value < min_moisture || moisture_0){min_moisture = moisture_value; moisture_0 = false;}	
+					if(moisture_value > max_moisture){max_moisture = moisture_value;}	
+					
+				}
 
 			}
 
