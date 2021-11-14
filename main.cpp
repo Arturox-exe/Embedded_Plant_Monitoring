@@ -486,6 +486,7 @@ int main(void) {
 				printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],
 				rgb_readings[1],rgb_readings[2],rgb_readings[3]);
 				else
+					printf("CONNECT COLOR SENSOR\n");
 					
 	
 
