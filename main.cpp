@@ -80,10 +80,10 @@ int green_counter = 0;
 bool bigger_one = false;
 
 
-
+bool tticker;
 int wait_threads;
 InterruptIn button(PB_2);
-int mode = NORMAL;
+int mode = TEST;
 bool change = false;
 bool first_half = false;
 bool second_half = false;
@@ -106,6 +106,7 @@ Thread I2CThread(osPriorityNormal, 1024);
 Thread ledThread(osPriorityNormal, 1024);
 
 Ticker half;
+Ticker threads;
 
 bool AnalogFinish;
 bool I2CFinish;
@@ -126,9 +127,11 @@ extern void setLed(void);
 
 void AnalogRead(void){
 	while(true){
+		if(tticker){
 		ReadADC();
 		AnalogFinish = true;
-		ThisThread::sleep_for(chrono::seconds(wait_threads));
+		//ThisThread::sleep_for(chrono::seconds(wait_threads));
+		}
 	}
 }
 
@@ -139,6 +142,7 @@ void I2CRead(void){
 	int present;
 	while(true){
 		//read of temperature and humidity first
+		if(tticker){
 			if(RTHpresent()){
 					readSensor();
 					RTHerror = false;
@@ -159,13 +163,17 @@ void I2CRead(void){
 				RGBerror = false;
 			
 			I2CFinish = true;
-			ThisThread::sleep_for(chrono::seconds(wait_threads));
+			//ThisThread::sleep_for(chrono::seconds(wait_threads));
+		}
 		  
 	}
 }
 
 void change_mode(void){mode = (mode==NORMAL)? TEST:NORMAL; change = false; release = true;}
 void tickhalf_isr(void) {first_half = true;}
+void tickerthreads_isr(void) {
+tticker = true;
+}
 
 
 void RestartValues(void){
@@ -224,6 +232,8 @@ int main(void) {
 	
 	AnalogFinish = false;
 	I2CFinish = false;
+	tticker = true;
+
 	
 	button.mode(PullUp);
   button.fall(change_mode);
@@ -253,6 +263,7 @@ int main(void) {
 	
 	
   while (1){
+		
 						c = myGPS.read();   //queries the GPS
 
 //        if (c) { printf("%c", c); } //this line will echo the GPS data if not paused
@@ -277,6 +288,11 @@ int main(void) {
 														Red = 0;
 														Green = 0;
 														Blue = 0;
+				
+				
+														threads.detach();	
+														threads.attach(tickerthreads_isr,chrono::seconds(wait_threads));
+														tticker = false;
 	
 				
 													}
@@ -290,6 +306,10 @@ int main(void) {
 														first_half = false;
 														second_half = false;
 														start_ticker = true;
+				
+														threads.detach();	
+														threads.attach(tickerthreads_isr,chrono::seconds(wait_threads));
+														tticker = false;
 
 														
 														RestartValues();
@@ -298,12 +318,12 @@ int main(void) {
 											if(first_half && !second_half){
 														first_half = false;
 														second_half = true;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,1min);
 												}
 											if(first_half && second_half){
 														first_half = false;
 														second_half = false;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,1min);
 														
 														mean_light = sum_light / counter;
 														mean_moisture = sum_moisture / counter;
@@ -340,70 +360,18 @@ int main(void) {
 													}
 											if(start_ticker){
 													start_ticker = false;
-													half.attach(tickhalf_isr,30min);
+													half.attach(tickhalf_isr,1min);
 												}
-											if(!start_ticker && AnalogFinish && I2CFinish){
-												counter = counter + 1;
-												sum_light = sum_light + light_value;
-												sum_moisture = sum_moisture + moisture_value;
-												sum_t = sum_t + tData;
-												sum_rh = sum_rh + rhData;
-												if(light_value < min_light || light_0){min_light = light_value; light_0 = false;}	
-												if(light_value > max_light){max_light = light_value;}	
-												if(moisture_value < min_moisture || moisture_0){min_moisture = moisture_value; moisture_0 = false;}	
-												if(moisture_value > max_moisture){max_moisture = moisture_value;}	
-												if(tData < min_t || t_0){min_t = tData; t_0 = false;}	
-												if(tData > max_t){max_t = tData;}
-												if(rhData < min_rh || rh_0){min_rh = rhData; rh_0 = false;}	
-												if(rhData > max_rh){max_rh = rhData;}
 												
-												if(x_value < min_x || x_0){min_x = x_value; x_0 = false;}	
-												if(x_value > max_x){max_x = x_value;}
-												if(y_value < min_y || y_0){min_y = y_value; y_0 = false;}	
-												if(y_value > max_y){max_y = y_value;}
-												if(z_value < min_z || z_0){min_z = z_value; z_0 = false;}	
-												if(z_value > max_z){max_z = z_value;}
-												
-												if(!RGBerror){
-												
-															if(rgb_readings[0]>6000)
-														{
-															
-														}
-														else
-															{
-																if(rgb_readings[1]<100 && rgb_readings[2]<100 && rgb_readings[3]<100) //If low: none
-																	{
-																	
-																	}
-																	else
-																		{
-																		if(rgb_readings[1]>rgb_readings[2] && rgb_readings[1]>=rgb_readings[3]) //If max=RED
-																			{
-																				red_counter = red_counter + 1;
-																			}else if(rgb_readings[2]>rgb_readings[1] && rgb_readings[2]>rgb_readings[3]) //If max=Green
-																			{
-																				green_counter = green_counter + 1;
-																			}
-																			else if(rgb_readings[3]>rgb_readings[1] && rgb_readings[3]>rgb_readings[2])   //If max=Blue
-																			{
-																				blue_counter = blue_counter + 1;						
-																			}
-																		}
-															}
-												}else 
-													printf("Please Connect RGB sensor");
-											}
-												
-												break;					
-															
-													
+												break;																			
 		}
 		
 	
-			if(AnalogFinish && I2CFinish){
+			if(AnalogFinish && I2CFinish && tticker){
 				AnalogFinish = false;
 				I2CFinish = false;
+				threads.attach(tickerthreads_isr,chrono::seconds(wait_threads));
+				tticker = false;
 				
 		
 				
@@ -494,6 +462,60 @@ int main(void) {
 				
 				
 				printf("\n\n");
+				
+				
+					if(!start_ticker){
+												counter = counter + 1;
+												sum_light = sum_light + light_value;
+												sum_moisture = sum_moisture + moisture_value;
+												sum_t = sum_t + tData;
+												sum_rh = sum_rh + rhData;
+												if(light_value < min_light || light_0){min_light = light_value; light_0 = false;}	
+												if(light_value > max_light){max_light = light_value;}	
+												if(moisture_value < min_moisture || moisture_0){min_moisture = moisture_value; moisture_0 = false;}	
+												if(moisture_value > max_moisture){max_moisture = moisture_value;}	
+												if(tData < min_t || t_0){min_t = tData; t_0 = false;}	
+												if(tData > max_t){max_t = tData;}
+												if(rhData < min_rh || rh_0){min_rh = rhData; rh_0 = false;}	
+												if(rhData > max_rh){max_rh = rhData;}
+												
+												if(x_value < min_x || x_0){min_x = x_value; x_0 = false;}	
+												if(x_value > max_x){max_x = x_value;}
+												if(y_value < min_y || y_0){min_y = y_value; y_0 = false;}	
+												if(y_value > max_y){max_y = y_value;}
+												if(z_value < min_z || z_0){min_z = z_value; z_0 = false;}	
+												if(z_value > max_z){max_z = z_value;}
+												
+												if(!RGBerror){
+												
+															if(rgb_readings[0]>6000)
+														{
+															
+														}
+														else
+															{
+																if(rgb_readings[1]<100 && rgb_readings[2]<100 && rgb_readings[3]<100) //If low: none
+																	{
+																	
+																	}
+																	else
+																		{
+																		if(rgb_readings[1]>rgb_readings[2] && rgb_readings[1]>=rgb_readings[3]) //If max=RED
+																			{
+																				red_counter = red_counter + 1;
+																			}else if(rgb_readings[2]>rgb_readings[1] && rgb_readings[2]>rgb_readings[3]) //If max=Green
+																			{
+																				green_counter = green_counter + 1;
+																			}
+																			else if(rgb_readings[3]>rgb_readings[1] && rgb_readings[3]>rgb_readings[2])   //If max=Blue
+																			{
+																				blue_counter = blue_counter + 1;						
+																			}
+																		}
+															}
+												}else 
+													printf("Please Connect RGB sensor");
+											}
 
 			}
 
