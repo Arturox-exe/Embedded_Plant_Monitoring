@@ -318,12 +318,12 @@ int main(void) {
 											if(first_half && !second_half){
 														first_half = false;
 														second_half = true;
-														half.attach(tickhalf_isr,1min);
+														half.attach(tickhalf_isr,30min);
 												}
 											if(first_half && second_half){
 														first_half = false;
 														second_half = false;
-														half.attach(tickhalf_isr,1min);
+														half.attach(tickhalf_isr,30min);
 														
 														mean_light = sum_light / counter;
 														mean_moisture = sum_moisture / counter;
@@ -360,7 +360,7 @@ int main(void) {
 													}
 											if(start_ticker){
 													start_ticker = false;
-													half.attach(tickhalf_isr,1min);
+													half.attach(tickhalf_isr,30min);
 												}
 												
 												break;																			
