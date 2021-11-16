@@ -82,6 +82,7 @@ bool bigger_one = false;
 
 bool tticker;
 int wait_threads;
+
 InterruptIn button(PB_2);
 int mode = TEST;
 bool change = false;
@@ -125,16 +126,18 @@ extern bool RTHpresent();
 extern void ReadADC(void);
 extern void setLed(void);
 
+/******Thread calculating the analog part *******/
 void AnalogRead(void){
 	while(true){
 		if(tticker){
 		ReadADC();
 		AnalogFinish = true;
-		//ThisThread::sleep_for(chrono::seconds(wait_threads));
+		
 		}
 	}
 }
 
+/******Thread calculating the I2C part *******/
 void I2CRead(void){
 	TCS3472_I2C rgb_sensor (PB_9, PB_8);
 	MMA8451Q acc(PB_9,PB_8,0x1c<<1);
@@ -163,19 +166,20 @@ void I2CRead(void){
 				RGBerror = false;
 			
 			I2CFinish = true;
-			//ThisThread::sleep_for(chrono::seconds(wait_threads));
 		}
 		  
 	}
 }
-
+/****** Funtion when user button is pressed *******/
 void change_mode(void){mode = (mode==NORMAL)? TEST:NORMAL; change = false; release = true;}
+/****** Ticker to calculate 30 min (done two times) *******/
 void tickhalf_isr(void) {first_half = true;}
+/****** Ticker for the threads parts will be 2/30 seconds *******/
 void tickerthreads_isr(void) {
 tticker = true;
 }
 
-
+/****** Function to restart the stored values *******/
 void RestartValues(void){
 			sum_t = 0.0;
 			min_t = 0.0;
@@ -225,6 +229,7 @@ void RestartValues(void){
 
 int main(void) {
 	
+	//Start of the 3 threads
 	AnalogThread.start(AnalogRead);
 	I2CThread.start(I2CRead);
 	ledThread.start(setLed);
@@ -266,8 +271,6 @@ int main(void) {
 		
 						c = myGPS.read();   //queries the GPS
 
-//        if (c) { printf("%c", c); } //this line will echo the GPS data if not paused
-
         //check if we recieved a new message from GPS, if so, attempt to parse it,
         if ( myGPS.newNMEAreceived() ) {
             if ( !myGPS.parse(myGPS.lastNMEA()) ) {
@@ -277,6 +280,7 @@ int main(void) {
 
 		switch(mode){
 			case TEST: 			if(!change){
+			//The program enters here if the user press the button when it was in normal mode
 														test_mode = 1;
 														normal_mode = 0;
 														wait_threads = 2;
@@ -299,6 +303,7 @@ int main(void) {
 											if(first_half || second_half){first_half = false; second_half = false;}
 													break;
 			case NORMAL: 		if(!change){
+			//The program enters here if the user press the button when it was in test mode
 														test_mode = 0;
 														normal_mode = 1;
 														wait_threads = 30;
@@ -315,15 +320,17 @@ int main(void) {
 														RestartValues();
 				
 															}
+											//If the first 30 min has ended
 											if(first_half && !second_half){
 														first_half = false;
 														second_half = true;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,1min);
 												}
+											//If the second 30 min has ended prints all teh stored values
 											if(first_half && second_half){
 														first_half = false;
 														second_half = false;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,1min);
 														
 														mean_light = sum_light / counter;
 														mean_moisture = sum_moisture / counter;
@@ -332,7 +339,7 @@ int main(void) {
 														
 														printf("RESULTS AFTER AN HOUR WITH %i VALUES TAKEN: \n", counter);
 														printf("SOIL MOISTURE(%): MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_moisture, max_moisture, min_moisture);
-														printf("LIGHT(lux): MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
+														printf("LIGHT(%): MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
 														printf("TEMP/HUM: ");
 														printf("Temperature (oC) : MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_t, max_t, min_t);
 														printf("Relative Humidity(%): MEAN: %.3f, MAX_VALUE: %.3f, MIN_VALUE: %.3f\n", mean_rh, max_rh, min_rh);
@@ -358,15 +365,16 @@ int main(void) {
 														
 															RestartValues();
 													}
+											//If the user changes to normal mode it starts the ticker of first half
 											if(start_ticker){
 													start_ticker = false;
-													half.attach(tickhalf_isr,30min);
+													half.attach(tickhalf_isr,1min);
 												}
 												
 												break;																			
 		}
 		
-	
+			//If the reads are finished after 2/30 seconds it prints the values
 			if(AnalogFinish && I2CFinish && tticker){
 				AnalogFinish = false;
 				I2CFinish = false;
@@ -374,9 +382,10 @@ int main(void) {
 				tticker = false;
 				
 		
-				
+				//Prints Soil Moisture
 				printf("SOIL MOISTURE: %.2f % \n", moisture_value);
-				printf("LIGHT: %.2f lux\n", light_value);
+				//Prints Light
+				printf("LIGHT: %.2f % \n", light_value);
 				
 				
 
@@ -384,7 +393,6 @@ int main(void) {
         //check if enough time has passed to warrant printing GPS info to screen
         //note if refresh_Time is too low or pc.baud is too low, GPS data may be lost during printing
         if (duration_cast<milliseconds>(refresh_Timer.elapsed_time()).count() >= refresh_Time) {
-        //if (refresh_Timer.read_ms() >= refresh_Time) {
             refresh_Timer.reset();
 					
 					printf("GPS - #Sats: %d\r", myGPS.satellites);
@@ -398,7 +406,8 @@ int main(void) {
 						printf("GPS Time: %d:%d:%d.%u\r\n", myGPS.hour + 1, myGPS.minute, myGPS.seconds, myGPS.milliseconds);
         }
 				
-					if(!RTHerror){		
+					if(!RTHerror){
+						//Prints Temperature and relative humidity
 						printf("TEMP/HUM: ");
 						tData = _tData/1000;
 						auxtData = _tData % 1000;
@@ -438,6 +447,7 @@ int main(void) {
 					else
 				printf("**********PLEASE CONNECT THE RTH SENSOR***********\n");
 					
+				//Prints the acceleration 	
 				if(!AccError){
 					x_value = result[0] * 10;
 					y_value = result[1] * 10;
@@ -450,20 +460,18 @@ int main(void) {
 				if(mode == TEST){
 					changeled = true;
 				}
+				
+				//Prints what color is the most seen
 				if(!RGBerror)	
 				printf("COLOR SENSOR: Clear: %d, Red: %d, Green: %d, Blue: %d\n",rgb_readings[0],
 				rgb_readings[1],rgb_readings[2],rgb_readings[3]);
 				else
-					printf("CONNECT COLOR SENSOR\n");
-					
-	
-
-		
-				
+					printf("CONNECT COLOR SENSOR\n");		
 				
 				printf("\n\n");
 				
 				
+				//It stores all the values read
 					if(!start_ticker){
 												counter = counter + 1;
 												sum_light = sum_light + light_value;
