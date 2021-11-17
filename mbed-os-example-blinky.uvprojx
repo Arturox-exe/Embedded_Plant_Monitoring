@@ -11214,16 +11214,6 @@
               <FilePath>mbed_config.h</FilePath>
             </File>
             <File>
-              <FileName>MBed_Adafruit_GPS.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\MBed_Adafruit_GPS.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>MBed_Adafruit_GPS.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\MBed_Adafruit_GPS.h</FilePath>
-            </File>
-            <File>
               <FileName>led_control.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\led_control.cpp</FilePath>
@@ -11277,6 +11267,21 @@
               <FileName>TCS3472_I2C.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\TCS3472_I2C\TCS3472_I2C.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>GPS</GroupName>
+          <Files>
+            <File>
+              <FileName>MBed_Adafruit_GPS.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\MBed_Adafruit_GPS.h</FilePath>
+            </File>
+            <File>
+              <FileName>MBed_Adafruit_GPS.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\MBed_Adafruit_GPS.cpp</FilePath>
             </File>
           </Files>
         </Group>

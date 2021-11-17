@@ -314,7 +314,7 @@ int main(void) {
 			//The program enters here if the user press the button when it was in test mode
 														test_mode = 0;
 														normal_mode = 1;
-														wait_threads = 30;
+														wait_threads = 1;
 														change = true;
 														first_half = false;
 														second_half = false;
@@ -332,20 +332,20 @@ int main(void) {
 											if(first_half && !second_half){
 														first_half = false;
 														second_half = true;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,15s);
 												}
 											//If the second 30 min has ended prints all teh stored values
 											if(first_half && second_half){
 														first_half = false;
 														second_half = false;
-														half.attach(tickhalf_isr,30min);
+														half.attach(tickhalf_isr,15s);
 														
 														mean_light = sum_light / counter;
 														mean_moisture = sum_moisture / counter;
 														mean_t = sum_t /counter;
 														mean_rh = sum_rh / counter;
 														
-														printf("RESULTS AFTER AN HOUR WITH %i VALUES TAKEN: \n", counter);
+														printf("RESULTS AFTER AN HOUR WITH: \n");
 														printf("SOIL MOISTURE(%): MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_moisture, max_moisture, min_moisture);
 														printf("LIGHT(%): MEAN: %.2f, MAX_VALUE: %.2f, MIN_VALUE: %.2f\n", mean_light, max_light, min_light);
 														printf("TEMP/HUM: ");
@@ -354,15 +354,15 @@ int main(void) {
 														printf("ROTATION: X_max= %.2f\t X_min= %.2f\t Y_max= %.2f\t Y_min= %.2f\t Z_max= %.2f\t Z_min= %.2f \n",
 																max_x, min_x, max_y, min_y, max_z, min_z);
 														if(red_counter>blue_counter && red_counter>green_counter){
-															printf("RED IS THE COLOR MOST SAW, %i TIMES", red_counter);
+															printf("RED IS THE COLOR MOST SAW");
 															bigger_one = true;
 														}
 														if(blue_counter>red_counter && blue_counter>green_counter){
-															printf("BLUE IS THE COLOR MOST SAW, %i TIMES", blue_counter);
+															printf("BLUE IS THE COLOR MOST SAW");
 															bigger_one = true;
 														}
 														if(green_counter>red_counter && green_counter>blue_counter){
-															printf("GREEN IS THE COLOR MOST SAW, %i TIMES", green_counter);
+															printf("GREEN IS THE COLOR MOST SAW");
 															bigger_one = true;
 														}
 														if(!bigger_one){ printf("THERE IS NOT A CLEAR COLOR ABOVE THE OTHERS"); } 
@@ -376,7 +376,7 @@ int main(void) {
 											//If the user changes to normal mode it starts the ticker of first half
 											if(start_ticker){
 													start_ticker = false;
-													half.attach(tickhalf_isr,30min);
+													half.attach(tickhalf_isr,15s);
 												}
 												
 												break;																			
@@ -403,15 +403,16 @@ int main(void) {
         if (duration_cast<milliseconds>(refresh_Timer.elapsed_time()).count() >= refresh_Time) {
             refresh_Timer.reset();
 					
-					printf("GPS - #Sats: %d\r", myGPS.satellites);
+					printf("GPS - #Sats: %d\r\n", myGPS.satellites);
             if ((int)myGPS.fixquality > 0) {
-                printf("Lat(VTC): %5.2f %c\r", myGPS.latitude, myGPS.lat);
-							  printf("Long(VTC): %5.2f %c\r", myGPS.longitude, myGPS.lon);
-                printf("Altitude: %5.2f m\r", myGPS.altitude);
+                printf("Lat(VTC): %5.2f %c\r\n", myGPS.latitude, myGPS.lat);
+							  printf("Long(VTC): %5.2f %c\r\n", myGPS.longitude, myGPS.lon);
+                printf("Altitude: %5.2f m\r\n", myGPS.altitude);
             }else
 						printf("NOT ENOUGH QUALITY TO GET LOCATION ");
 						
 						printf("GPS Time: %d:%d:%d.%u\r\n", myGPS.hour + 1, myGPS.minute, myGPS.seconds, myGPS.milliseconds);
+						printf("GPS Date: %d/%d/20%d\r\n", myGPS.day, myGPS.month, myGPS.year);
         }
 				
 					if(!RTHerror){
@@ -457,9 +458,9 @@ int main(void) {
 					
 				//Prints the acceleration 	
 				if(!AccError){
-					x_value = result[0] * 10;
-					y_value = result[1] * 10;
-					z_value = result[2] * 10;
+					x_value = result[0];
+					y_value = result[1];
+					z_value = result[2];
 					printf("ROTATION: X_axis= %.2f\t Y_axis= %.2f\t Z_axis= %.2f \n",
 					x_value, y_value, z_value);
 				}else
