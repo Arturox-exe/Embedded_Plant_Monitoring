@@ -8,7 +8,7 @@ Final project of the Embedded platforms and communications for iot subject from 
 - Si7021 (Temperature and Humidity)
 - HW5P-1 (Ambient Light)
 - SEN-13322 (Soil moisture)
-- TCS34725 (Leaf Colour)
+- TCS34725 (Colour)
 - MMA8451Q (Accelerometer)
 - FGPMMOPA6H (GPS)
 - RGB LED
